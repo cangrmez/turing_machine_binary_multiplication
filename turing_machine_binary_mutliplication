@@ -1,0 +1,108 @@
+#Turing Makinesi ile Binary Çarpma
+
+def turing_carp(a_str, b_str):
+    # Girdi doğrulama (İstenir 2)
+    if not a_str or not all(c in "01" for c in a_str):
+        print("HATA: Yalnızca 0 ve 1 girin.")
+        return
+    if not b_str or not all(c in "01" for c in b_str):
+        print("HATA: Yalnızca 0 ve 1 girin.")
+        return
+
+    # Bant formatına dönüştür (İstenir 3)
+    bant = list(a_str + "*" + b_str + "=") + ["_"] * 64
+    kafa = 0
+    adim = 0
+    durum = "q_baslangic"
+
+    print(f"\n  Bant: {''.join(bant).rstrip('_')}")
+    print(f"  {int(a_str,2)} x {int(b_str,2)} = {int(a_str,2)*int(b_str,2)}\n")
+    print(f"  {'ADIM':<6} {'DURUM':<18} {'OKUNAN':<10} {'YAZILAN':<10} {'YON':<6} BANT")
+    print("  " + "-" * 75)
+
+    def yazdir(okunan, yazilan, yon):
+        nonlocal adim
+        goster = list(bant)
+        goster[kafa] = f"[{goster[kafa]}]"
+        bant_str = "".join(goster).rstrip("_")
+        print(f"  {adim:<6} {durum:<18} {str(okunan):<10} {str(yazilan):<10} {yon:<6} {bant_str}")
+        adim += 1
+
+    # q_baslangic: * karakterini bul, operandları ayır (İstenir 4)
+    while bant[kafa] in ("0", "1"):
+        yazdir(bant[kafa], bant[kafa], "SAG")
+        kafa += 1
+
+    if bant[kafa] != "*":
+        durum = "q_red"
+        yazdir(bant[kafa], bant[kafa], "-")
+        print("  REDDEDILDI -> q_red")
+        return
+
+    yazdir("*", "*", "SAG")
+    durum = "q_carpan_tara"
+    kafa += 1
+
+    # q_carpan_tara: B bitlerini tara, sona git
+    while bant[kafa] in ("0", "1"):
+        yazdir(bant[kafa], bant[kafa], "SAG")
+        kafa += 1
+
+    yazdir("=", "=", "SAG")
+    sonuc_pos = kafa + 1
+
+    # Shift-and-add (İstenir 5)
+    a_val = int(a_str, 2)
+    sonuc = 0
+
+    for i, bit in enumerate(reversed(b_str)):
+        if bit == "0":
+            yazdir("0", "0", "SOL")
+        else:
+            yazdir("1", "1", "SOL")
+            durum = "q_topla"
+            sonuc += a_val << i
+            yazdir("->", "->", "SAG")
+            durum = "q_carpan_tara"
+
+    # q_sonuc_yaz: sonucu banta yaz
+    durum = "q_sonuc_yaz"
+    yazdir("bitti", "-", "SAG")
+
+    sonuc_bin = bin(sonuc)[2:] if sonuc > 0 else "0"
+    for bit in sonuc_bin:
+        bant[sonuc_pos] = bit
+        yazdir("-", bit, "SAG")
+        sonuc_pos += 1
+
+    # q_kabul
+    durum = "q_kabul"
+    yazdir("_", "-", "-")
+
+    print("  " + "-" * 75)
+    print(f"\n  KABUL EDILDI -> q_kabul")
+    print(f"  Sonuc (binary) : {sonuc_bin}")   # İstenir 7
+    print(f"  Sonuc (decimal): {sonuc}")
+
+
+# Ana döngü
+print("=" * 79)
+print("  TURING MAKINESI - Binary Carpma  |  Cikis icin q yazin")
+print("=" * 79)
+
+while True:
+    print()
+    a = input("  Birinci sayi (multiplicand): ").strip()
+    if a.lower() == "q":
+        break
+    b = input("  Ikinci sayi  (multiplier)  : ").strip()
+    if b.lower() == "q":
+        break
+
+    turing_carp(a, b)
+
+    print()
+    if input("  Yeni hesaplama? (e/h): ").strip().lower() != "e":
+        break
+
+print("  Program sonlandi.")
